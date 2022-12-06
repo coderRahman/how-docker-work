@@ -124,7 +124,7 @@ The following command will start an Nginx image and listen to port 80 on the hos
 
 
 
-# ## check the network interfaces on the host
+### check the network interfaces on the host
     ip addr
 
 ###  check the network interfaces in the container
