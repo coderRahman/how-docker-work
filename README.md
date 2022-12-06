@@ -108,44 +108,55 @@ MASQUERADE modifies the source address of the packet, replacing it with the addr
 Each Docker container has its own network stack, where a new network namespace is created for each container, isolated from other containers. When a Docker container launches, the Docker engine assigns it a network interface with an IP address, a default gateway, and other components, such as a routing table and DNS services
 
 
-Docker offers five network types. All these network types are configured through docker0 via the --net flag
+Docker allows you to create three different types of network drivers. All these network types are configured through docker0 via the --net flag
+
+This is the default. Whenever you start Docker, a bridge network gets created and all newly started containers will connect automatically to the default bridge network.
+
+
 
 ### 1. Host Networking (--net=host): The container shares the same network namespace of the default host.
+
+As the name suggests, host drivers use the networking provided by the host machine. And it removes network isolation between the container and the host machine where Docker is running. For example, If you run a container that binds to port 80 and uses host networking, the container’s application is available on port 80 on the host’s IP address. You can use the host network if you don’t want to rely on Docker’s networking but instead rely on the host machine networking.
+
+One limitation with the host driver is that it doesn’t work on Docker desktop: you need a Linux host to use it. This article focuses on Docker desktop, but I’ll show you the commands required to work with the Linux host.
+
+The following command will start an Nginx image and listen to port 80 on the host machine:
+
+
 
 # ## check the network interfaces on the host
     ip addr
 
 ###  check the network interfaces in the container
 
+
     docker run --net=host -it --rm alpine ip addr
 
 ### 2. Bridge Networking (--net=bridge/default)
+
+You can use this whenever you want your containers running in isolation to connect and communicate with each other. Since containers run in isolation, the bridge network solves the port conflict problem. Containers running in the same bridge network can communicate with each other, and Docker uses iptables on the host machine to prevent access outside of the bridge
+
+### Check the available network by running the  command
+
+docker network ls
 
 #####  check the network interfaces in the container
 
     docker run --net=bridge -it --rm alpine ip addr
 
-### 3. Custom bridge network (--network=xxx): 
-####  create custom bridge
+### 3. Overlay driver 
 
-    docker network create foo
+The Overlay driver is for multi-host network communication, as with Docker Swarm or Kubernetes. It allows containers across the host to communicate with each other without worrying about the setup. Think of an overlay network as a distributed virtualized network that’s built on top of an existing computer network.
 
-You can see that on the custom creation of a bridge, a bridge interface is added to the host. Now, all containers in a custom bridge can communicate with the ports of other containers on that bridge. This provides better isolation and security.
+To create an overlay network for Docker Swarm services, use the following command:
 
-### Now let's run two containers 
+### docker network create -d overlay my-overlay-network
+ 
 
-    docker run -it --rm --name=container1 --network=foo alpine sh
-    docker run -it --rm --name=container2 --network=foo alpine sh
 
-#### check the network interfaces on the host
+### 4. Macvlan driver: 
 
-    ip addr
-
-As expected, with bridge networking, both containers (container1, container2) have got their respective veth  cable attached.
-
-### 4. Container-defined Networking(--net=container:$container2): 
-
-    docker run -it --rm --name=container1  alpine sh
+“Macvlan networks allow you to assign a MAC address to a container, making it appear as a physical device on your network. The Docker daemon routes traffic to containers by their MAC addresses. Using the macvlan driver is sometimes the best choice when dealing with legacy applications that expect to be directly connected to the physical network, rather than routed through the Docker host’s network stack.”
 
 ### 5. No networking: This option disables all networking for the container
 
