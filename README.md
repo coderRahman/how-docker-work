@@ -110,7 +110,7 @@ Each Docker container has its own network stack, where a new network namespace i
 
 Docker allows you to create three different types of network drivers. All these network types are configured through docker0 via the --net flag
 
-This is the default. Whenever you start Docker, a bridge network gets created and all newly started containers will connect automatically to the default bridge network.
+ Whenever you start Docker, a bridge network gets created and all newly started containers will connect automatically to the default bridge network.
 
 
 
